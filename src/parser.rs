@@ -1,0 +1,166 @@
+use substring::Substring;
+/*
+File to parse all the user inputs and crafts them into usable strings.
+*/
+pub(crate) fn construct_url(input : &String, url_type : &str) -> String {
+    let domain_string = String::from("https://us.qobuz.squid.wtf/api/");
+    let get_music_string = String::from("get-music?q=");
+
+    let get_album_string = String::from("get-album?album_id=");
+
+    let download_tracks = String::from("download-music?track_id=");
+    let track_quality = String::from("&quality=27");
+
+    let mut final_url : String = String::new();
+
+    match url_type {
+        "get-music" => {
+            final_url = format!("{domain_string}{get_music_string}{input}&offset=0");
+        }
+        "get-album" => {
+            final_url = format!("{domain_string}{get_album_string}{input}");
+        }
+        "download-music" =>{
+            final_url = format!("{domain_string}{download_tracks}{input}{track_quality}");
+        }
+        _ => {
+            final_url = format!("{domain_string}");
+            println!("Error, invalid type specified.");
+        }
+    }
+
+    return final_url;
+}
+
+/*
+Takes the body of the response 
+and returns a string for the specific search song/album/artist the user had searched for.
+ */
+pub(crate) fn parse_search_response(body : &String, user_query : String) -> String { 
+    let mut holder_string = String::new();
+    let body_array = body.split("\"title\":");
+    let mut album_vector : Vec<&str>;
+    let mut album_id = String::new();
+    
+    // this disgusts me
+    holder_string = "\"performer\":{\"name\":\"".to_string();
+    holder_string.push_str(parse_user_input(&user_query).0);
+    
+    println!("\nParsed body:\n");
+
+    for n in body_array {
+
+        if n.contains(&holder_string) {
+            println!("N: {}\n", n);
+           // Take n, chunk the first two quotation marks and get the middle content. 
+           let index_touple = chunk_str(&n.to_string(), '"', 2);
+           let start_index = index_touple.0 + 1;
+           let end_index = index_touple.1;
+
+           println!("\nindex_touple: {},{}\n",index_touple.0, index_touple.1);
+           
+           let n_string = n.to_string();
+           let n_modstring = &n_string.substring(start_index.try_into().unwrap(), end_index.try_into().unwrap());
+           
+           println!("Contains Holder_string");
+           println!("\nn_substring : {}\n", n_modstring);
+
+           if user_query.contains(n_modstring) {
+            println!("Contains n_substring");
+            
+            album_vector = n.split(",\"id\":").collect::<Vec<_>>();
+    
+            album_id = album_vector[2].to_string();
+
+            println!("Internal album id: {}\n", album_id);
+            let index_touple = chunk_str(&album_id, ',', 1);
+            //To exclude quotation marks from the album_id
+            let start_index = index_touple.0 + 1;
+            let end_index = index_touple.1 - 1;
+            album_id = album_id.substring(start_index.try_into().unwrap(),
+             end_index.try_into().unwrap()).to_string();
+           }
+        }
+    }
+    return album_id;
+}
+
+/*
+    Takes the an album id and returns the track ids within as a string Vector
+ */
+pub(crate) fn get_track_ids(album_body : &String) -> Vec<String> {
+
+    let album_split = album_body.split("\"track_ids\"").collect::<Vec<_>>();
+    let album_tracks_raw_string = album_split[1].to_string();
+
+    let index_touple = chunk_str(&album_tracks_raw_string, ':', 2);
+    let start_index = index_touple.0 + 1;
+    let end_index = index_touple.1;
+    let track_raw_string = album_tracks_raw_string.substring(start_index.try_into().unwrap(), end_index.try_into().unwrap()).to_string();
+
+    let index_touple = chunk_str_diff(&track_raw_string.to_string(), '[', ']');
+    let track_string = track_raw_string.substring((index_touple.0 + 1).try_into().unwrap(), index_touple.1.try_into().unwrap());
+
+    let track_ids =  track_string.split(',').map(|s| s.to_string()).collect::<Vec<String>>();
+
+    return track_ids;
+}
+
+/*
+    chunks strings in terms of "\ characters and returns a touple of two i32s marking the start index and end index.
+ */
+fn chunk_str(str : &String, to_remove : char, times_seen : i32) -> (i32, i32) {
+    let char_vec : Vec<char> = str.chars().collect();
+    let start    : i32 = 0;
+    let mut end  : i32 = 0;
+    let mut i    : i32 = 0; 
+    let mut seen : i32 = 0;
+
+    for ch in char_vec{
+
+        if ch == (to_remove) { 
+            seen += 1;
+        }
+
+        if seen == times_seen {
+            end = i;
+            break; 
+        }
+        i += 1;
+    }
+    // start offset to remove quotation.
+    return (start, end);
+}
+/*
+    to chunk strings by defining a start char and an end char.
+ */
+fn chunk_str_diff (str : &String, start : char, end : char) -> (i32, i32) {
+    let char_vec       : Vec<char> = str.chars().collect();
+    let mut start_index: i32 = 0;
+    let mut end_index  : i32 = 0;
+    let mut i          : i32 = 0; 
+
+    for ch in char_vec{
+
+        if ch == (start) { 
+            start_index = i;
+        }
+
+        if ch == (end) {
+            end_index = i;
+        }
+
+        i += 1;
+    }
+    return (start_index, end_index);
+}
+
+/*
+Takes the user input and returns it as two separate strings if the user queried a song/album with the artist's name.
+ */
+fn parse_user_input(user_query : &String) -> (&str, &str) {
+    let holder = user_query.split("-").collect::<Vec<_>>();
+    let artist = holder[0].trim();
+    let title = holder[1].trim();
+    return (artist, title);
+}
