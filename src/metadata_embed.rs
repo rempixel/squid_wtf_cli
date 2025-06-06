@@ -1,0 +1,3 @@
+/*
+    This file will embed metadata into the .flac audio files.
+ */

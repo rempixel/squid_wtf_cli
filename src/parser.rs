@@ -2,7 +2,7 @@ use substring::Substring;
 /*
 File to parse all the user inputs and crafts them into usable strings.
 */
-pub(crate) fn construct_url(input : &String, url_type : &str) -> String {
+pub fn construct_url(input : &String, url_type : &str) -> Result<String, String> {
     let domain_string = String::from("https://us.qobuz.squid.wtf/api/");
     let get_music_string = String::from("get-music?q=");
 
@@ -11,47 +11,41 @@ pub(crate) fn construct_url(input : &String, url_type : &str) -> String {
     let download_tracks = String::from("download-music?track_id=");
     let track_quality = String::from("&quality=27");
 
-    let mut final_url : String = String::new();
-
     match url_type {
-        "get-music" => {
-            final_url = format!("{domain_string}{get_music_string}{input}&offset=0");
-        }
-        "get-album" => {
-            final_url = format!("{domain_string}{get_album_string}{input}");
-        }
-        "download-music" =>{
-            final_url = format!("{domain_string}{download_tracks}{input}{track_quality}");
-        }
-        _ => {
-            final_url = format!("{domain_string}");
-            println!("Error, invalid type specified.");
-        }
+        "get-music"      => { Ok(format!("{domain_string}{get_music_string}{input}&offset=0")) }
+        "get-album"      => { Ok(format!("{domain_string}{get_album_string}{input}")) }
+        "download-music" => { Ok(format!("{domain_string}{download_tracks}{input}{track_quality}")) }
+        _                => { Ok(format!("{domain_string}"))}
     }
-
-    return final_url;
 }
 
 /*
 Takes the body of the response 
 and returns a string for the specific search song/album/artist the user had searched for.
  */
-pub(crate) fn parse_search_response(body : &String, user_query : String) -> String { 
+pub fn parse_search_response(body : &String, user_query : String) -> String { 
     let mut holder_string = String::new();
-    let body_array = body.split("\"title\":");
+    let body_lower_case = body.to_lowercase();
+    let body_array = body_lower_case.split("\"title\":");
     let mut album_vector : Vec<&str>;
     let mut album_id = String::new();
     
     // this disgusts me
     holder_string = "\"performer\":{\"name\":\"".to_string();
     holder_string.push_str(parse_user_input(&user_query).0);
+    let holder_string = holder_string.to_lowercase();
+
+    println!("\nHolder_String in Parse_search_response: {}\n", holder_string);
     
     println!("\nParsed body:\n");
 
     for n in body_array {
+        println!("All Results!:\n");
+        println!("n: {}\n", n);
 
         if n.contains(&holder_string) {
-            println!("N: {}\n", n);
+            println!("\nContains Holder_string\n");
+    
            // Take n, chunk the first two quotation marks and get the middle content. 
            let index_touple = chunk_str(&n.to_string(), '"', 2);
            let start_index = index_touple.0 + 1;
@@ -62,7 +56,7 @@ pub(crate) fn parse_search_response(body : &String, user_query : String) -> Stri
            let n_string = n.to_string();
            let n_modstring = &n_string.substring(start_index.try_into().unwrap(), end_index.try_into().unwrap());
            
-           println!("Contains Holder_string");
+           
            println!("\nn_substring : {}\n", n_modstring);
 
            if user_query.contains(n_modstring) {
@@ -88,10 +82,11 @@ pub(crate) fn parse_search_response(body : &String, user_query : String) -> Stri
 /*
     Takes the an album id and returns the track ids within as a string Vector
  */
-pub(crate) fn get_track_ids(album_body : &String) -> Vec<String> {
+pub fn get_track_ids(album_body : &String) -> Vec<String> {
 
     let album_split = album_body.split("\"track_ids\"").collect::<Vec<_>>();
-    let album_tracks_raw_string = album_split[1].to_string();
+    let album_tracks_raw_string = if album_split.len() > 1 { album_split[1].to_string()} else {album_split[0].to_string()};
+    println!("Album_tracks_raw_string: {}\n",album_tracks_raw_string);
 
     let index_touple = chunk_str(&album_tracks_raw_string, ':', 2);
     let start_index = index_touple.0 + 1;
