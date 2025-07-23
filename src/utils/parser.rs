@@ -1,4 +1,6 @@
+use serde_json::{ Value, from_str };
 use substring::Substring;
+
 /*
 File to parse all the user inputs and crafts them into usable strings.
 */
@@ -20,8 +22,20 @@ pub fn construct_url(input : &String, url_type : &str) -> Result<String, String>
 }
 
 /*
+Refactor parse_search_response
+ */
+
+pub fn parse_search_response2(body : &String, search_query : &String) -> Result<String, serde_json::Error> {
+    let body_json : Value = from_str(body)?;
+
+    println!("JSON VOMIT: {} ",body_json);
+    return Ok(" ".to_string());
+}
+
+/*
 Takes the body of the response 
 and returns a string for the specific search song/album/artist the user had searched for.
+Will be replaced by parse_search_response2
  */
 pub fn parse_search_response(body : &String, user_query : String) -> String { 
     let mut holder_string = String::new();
