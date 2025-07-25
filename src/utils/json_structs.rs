@@ -1,5 +1,10 @@
 use serde::{ Deserialize };
 
+pub enum UrlType {
+    GetMusic, 
+    GetAlbum,
+    DownloadMusic,
+}
 #[derive( Deserialize )]
 pub struct SearchResult {
     pub data : Data,
@@ -75,10 +80,12 @@ pub struct TrackItemInfo {
     pub maximum_channel_count : i32,
     pub maximum_sampling_rate : f32,
     pub track_number : i32,
-    pub album : AlbumItemInfo,
     pub audio_info : TrackAudioInfo,
     pub composer : TrackComposerInfo,
     pub performer : TrackPerformerInfo,
+  
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub album : Option<AlbumItemInfo>,
 }
 #[derive(Deserialize)]
 pub struct TrackAudioInfo {
@@ -92,4 +99,17 @@ pub struct TrackComposerInfo {
 #[derive(Deserialize)]
 pub struct TrackPerformerInfo {
     pub name : String, 
+}
+#[derive(Deserialize)]
+pub struct InnerAlbum { 
+    pub data : AlbumData,
+}
+#[derive(Deserialize)]
+pub struct AlbumData {
+    pub artist : AlbumArtistInfo,
+    pub composer : TrackComposerInfo,
+    pub image : AlbumImages,
+    pub label : LabelInfo,
+    pub tracks : Tracks,
+    pub track_ids : Vec<i32>
 }
