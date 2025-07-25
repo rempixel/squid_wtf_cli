@@ -1,6 +1,6 @@
-use serde_json::{ Value, from_str };
+use serde_json::{ from_str };
 use substring::Substring;
-
+use crate::utils::json_structs::SearchResult;
 /*
 File to parse all the user inputs and crafts them into usable strings.
 */
@@ -22,75 +22,16 @@ pub fn construct_url(input : &String, url_type : &str) -> Result<String, String>
 }
 
 /*
-Refactor parse_search_response
- */
-
-pub fn parse_search_response2(body : &String, search_query : &String) -> Result<String, serde_json::Error> {
-    let body_json : Value = from_str(body)?;
-
-    println!("JSON VOMIT: {} ",body_json);
-    return Ok(" ".to_string());
-}
-
-/*
 Takes the body of the response 
 and returns a string for the specific search song/album/artist the user had searched for.
-Will be replaced by parse_search_response2
  */
-pub fn parse_search_response(body : &String, user_query : String) -> String { 
-    let mut holder_string = String::new();
-    let body_lower_case = body.to_lowercase();
-    let body_array = body_lower_case.split("\"title\":");
-    let mut album_vector : Vec<&str>;
-    let mut album_id = String::new();
-    
-    // this disgusts me
-    holder_string = "\"performer\":{\"name\":\"".to_string();
-    holder_string.push_str(parse_user_input(&user_query).0);
-    let holder_string = holder_string.to_lowercase();
 
-    println!("\nHolder_String in Parse_search_response: {}\n", holder_string);
-    
-    println!("\nParsed body:\n");
+pub fn parse_search_response(body : &String) -> Result<String, serde_json::Error> {
+    let body_json : SearchResult = from_str(body).expect("Could not map JSON onto struct.");
 
-    for n in body_array {
-        println!("All Results!:\n");
-        println!("n: {}\n", n);
+    let album_id  = &body_json.data.albums.items[0].id;
 
-        if n.contains(&holder_string) {
-            println!("\nContains Holder_string\n");
-    
-           // Take n, chunk the first two quotation marks and get the middle content. 
-           let index_touple = chunk_str(&n.to_string(), '"', 2);
-           let start_index = index_touple.0 + 1;
-           let end_index = index_touple.1;
-
-           println!("\nindex_touple: {},{}\n",index_touple.0, index_touple.1);
-           
-           let n_string = n.to_string();
-           let n_modstring = &n_string.substring(start_index.try_into().unwrap(), end_index.try_into().unwrap());
-           
-           
-           println!("\nn_substring : {}\n", n_modstring);
-
-           if user_query.contains(n_modstring) {
-            println!("Contains n_substring");
-            
-            album_vector = n.split(",\"id\":").collect::<Vec<_>>();
-    
-            album_id = album_vector[2].to_string();
-
-            println!("Internal album id: {}\n", album_id);
-            let index_touple = chunk_str(&album_id, ',', 1);
-            //To exclude quotation marks from the album_id
-            let start_index = index_touple.0 + 1;
-            let end_index = index_touple.1 - 1;
-            album_id = album_id.substring(start_index.try_into().unwrap(),
-             end_index.try_into().unwrap()).to_string();
-           }
-        }
-    }
-    return album_id;
+    return Ok(format!("{album_id}"));
 }
 
 /*
@@ -162,14 +103,4 @@ fn chunk_str_diff (str : &String, start : char, end : char) -> (i32, i32) {
         i += 1;
     }
     return (start_index, end_index);
-}
-
-/*
-Takes the user input and returns it as two separate strings if the user queried a song/album with the artist's name.
- */
-fn parse_user_input(user_query : &String) -> (&str, &str) {
-    let holder = user_query.split("-").collect::<Vec<_>>();
-    let artist = holder[0].trim();
-    let title = holder[1].trim();
-    return (artist, title);
 }

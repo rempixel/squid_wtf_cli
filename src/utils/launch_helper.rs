@@ -10,9 +10,7 @@ pub async fn program_entry(search_query : String) -> Result<String, Error>{
         let body = res.text().await?;
         println!("Body:\n{}", &body);
 
-        parse_search_response2(&body, &search_query);
-
-        let album_id = parse_search_response(&body, search_query);
+        let album_id = parse_search_response(&body).expect("Could not parse search response.");
         println!("\nAlbum Id: {}\n", &album_id);
 
         if let Ok (get_album_request) = construct_url(&album_id, "get-album") {
