@@ -1,5 +1,5 @@
 use serde_json::{ from_str };
-use crate::utils::json_structs::{ SearchResult, UrlType, InnerAlbum };
+use crate::utils::json_structs::{ SearchResult, UrlType, InnerAlbum, DownloadMusic};
 /*
 File to parse all the user inputs and crafts them into usable strings.
 */
@@ -39,4 +39,14 @@ pub fn get_track_ids(album_body : &String) -> Result<Vec<i32>, String> {
     let track_ids : Vec<i32> = album_struct.data.track_ids;
     
     return Ok(track_ids);
+}
+
+/*
+    Takes the response of a track body, parses into a struct and returns the url.
+ */
+pub fn get_dl_link(track_body : &String) -> Result<String, serde_json::Error> {
+    let track_dl_struct : DownloadMusic = from_str(&track_body)
+        .expect("Error Casting JSON onto struct.");
+
+    return Ok(track_dl_struct.data.url);
 }

@@ -113,3 +113,11 @@ pub struct AlbumData {
     pub tracks : Tracks,
     pub track_ids : Vec<i32>
 }
+#[derive(Deserialize)]
+pub struct DownloadMusic {
+    pub data : DownloadData
+}
+#[derive(Deserialize)]
+pub struct DownloadData { 
+    pub url : String
+}
