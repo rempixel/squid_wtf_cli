@@ -1036,6 +1036,7 @@ dependencies = [
 name = "squid_wtf_cli"
 version = "0.1.0"
 dependencies = [
+ "bytes",
  "error-chain",
  "metaflac",
  "reqwest",

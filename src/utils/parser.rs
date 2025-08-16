@@ -1,5 +1,5 @@
 use serde_json::{ from_str };
-use crate::utils::json_structs::{ SearchResult, UrlType, InnerAlbum, DownloadMusic};
+use crate::utils::json_structs::{ DownloadMusic, InnerAlbum, SearchResult, Tracks, UrlType};
 /*
 File to parse all the user inputs and crafts them into usable strings.
 */
@@ -22,23 +22,30 @@ Takes the body of the response
 and returns a string for the specific search song/album/artist the user had searched for.
  */
 
-pub fn parse_search_response(body : &String) -> Result<String, serde_json::Error> {
-    let body_json : SearchResult = from_str(body)
-        .expect("Could not map JSON onto struct.");
-    let album_id  = &body_json.data.albums.items[0].id;
+pub fn parse_search_response(body : &String) -> Result<(String, String), serde_json::Error> {
+    let body_json_result: Result<SearchResult, serde_json::Error> = from_str(body);
 
-    return Ok(format!("{album_id}"));
+    let body_json : SearchResult = match body_json_result {
+        Ok(structure) => structure, 
+        Err(error) => panic!("Unable to map response into a structure: Error: {error:?}")
+    };
+
+    if let Some(album) = body_json.data.albums.items.get(0) {
+        Ok((album.id.clone(), album.image.large.clone()))
+    } else {
+        Err(serde::de::Error::custom("No album found"))
+    }
 }
 
+
 /*
-    Takes the an album id and returns the track ids within as a string Vector
+    Takes the an album id and returns a tuple consisting the track ids within as a string Vector, and the Track Struct.
  */
-pub fn get_track_ids(album_body : &String) -> Result<Vec<i32>, String> {
+pub fn get_track_ids(album_body : &String) -> Result<(InnerAlbum), String> {
     let album_struct : InnerAlbum = from_str(album_body)
         .expect("Unable to cast into album struct");
-    let track_ids : Vec<i32> = album_struct.data.track_ids;
-    
-    return Ok(track_ids);
+
+    return Ok((album_struct));
 }
 
 /*

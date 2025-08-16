@@ -71,6 +71,7 @@ pub struct ArtistItemInfo {
 #[derive(Deserialize)]
 pub struct TrackItemInfo {
     pub copyright : String,
+    pub id : i32, 
     pub isrc : String,
     pub performers : String,
     pub release_date_original : String,
@@ -111,6 +112,10 @@ pub struct AlbumData {
     pub image : AlbumImages,
     pub label : LabelInfo,
     pub tracks : Tracks,
+    pub id : String,
+    pub title: String,
+    pub genres_list : Vec<String>,
+    pub tracks_count : i32,
     pub track_ids : Vec<i32>
 }
 #[derive(Deserialize)]
