@@ -2,11 +2,13 @@
 
 # Usage and Compilation: 
 *How to use!*
+
 **Installation:** 
 - Install `rustc` on your machine
 - run `cargo build --release` on the project.
 - run the subsequent program executable.
 - *Plan to release compiled program in the future!*
+
 **Usage:** 
 - When prompted to search, input your result with
 	- `{artist name} - {album name}`
@@ -29,6 +31,7 @@
 	- `for i in *.flac; do ffmpeg -i "$i" -c:v copy -sample_fmt s16p -ar 44100 -c:a alac "${i%.*}.m4a"; done` 
 
 # Part of a larger personal iPod revival project:
+
 **Parts to Purchase**
 *Certain things are broke with the pod*
 - [x] [SD Card](https://www.amazon.com/dp/B0B7NS71G2?_encoding=UTF8&th=1)
@@ -41,8 +44,11 @@
 Total Cost: ~$65ish dollars? 
 
 **iPod successfully repaired!**
+
 # Projects to Create 
+
 **Recursively Download from Playlist!** 
+
 - [rust-ytdl crate](https://crates.io/crates/rusty_ytdl) (assuming this crate works)
 - On launch, guess and check YT rate limit, Go off last known rate limit and test. 
 	- If fail - Proxy to switch on HTTP Status Code 429
