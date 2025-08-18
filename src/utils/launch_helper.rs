@@ -1,4 +1,4 @@
-use std::fs::{ File, OpenOptions };
+use std::fs::{ File, create_dir, exists };
 use std::io::{ copy, Cursor };
 use std::collections::HashMap;
 use bytes::{ Bytes };
@@ -36,7 +36,6 @@ pub async fn program_entry(search_query : String) -> Result<String, Error>{
                 .await
                 .expect("Unable to download file.");
             }
-            
         } else {
             println!("Unable to find album body.\n");
         }
@@ -55,8 +54,18 @@ async fn download_track(track : i32, track_metadata : &TrackItemInfo, album_imag
         let track_download_link = get_dl_link(&track_body)
             .expect("Unable to find Download Link for track.");
         let track_download_res : Response = reqwest::get(track_download_link).await?;
+
+        let album_name : &String = &album_data.data.title.clone();
+
+        if !exists("./output/").expect("Can't verify existence of file: ") {
+            create_dir("./output/").expect("Cannot create directory: ");
+        }
+        if !exists(format!("./output/{album_name}/")).expect("Cannot verify existance of file or directory: ") {
+            create_dir(format!("./output/{album_name}/")).expect("Cannot create subdirectory in output.");
+        }
+
         let track_name : &String = &track_metadata.title;
-        let file_path = format!("./output/{track_name}.flac");
+        let file_path = format!("./output/{album_name}/{track_name}.flac");
         let track_body = track_download_res.bytes().await
             .expect("Unable to download track.");
 
@@ -67,6 +76,7 @@ async fn download_track(track : i32, track_metadata : &TrackItemInfo, album_imag
         embed_metadata_flac(&file_path, &track_metadata, image_bytes.to_vec(), &album_data.data); //TODO: figure out how to get metadata structs.
         let mut out = File::open(&file_path).expect("Unable to open file: ");
         let tag = Tag::read_from(&mut out).expect("unable to read tag from file: ");
+        //debug
         assert_eq!(tag.pictures().count(), 1);
     }
     println!("Track Id: {}\n", track);

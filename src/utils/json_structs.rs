@@ -109,6 +109,7 @@ pub struct InnerAlbum {
 pub struct AlbumData {
     pub artist : AlbumArtistInfo,
     pub composer : TrackComposerInfo,
+    pub copyright : String,
     pub image : AlbumImages,
     pub label : LabelInfo,
     pub tracks : Tracks,
